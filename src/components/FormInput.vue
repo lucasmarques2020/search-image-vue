@@ -14,6 +14,7 @@
           />
           <label for="id-width">(px)</label>
         </fieldset>
+
         <fieldset>
           <input
             type="number"
@@ -27,7 +28,22 @@
           <label for="id-height">(px)</label>
         </fieldset>
       </div>
-      <button :id="btnForm" :class="{ loading: isLoading }" type="button" @click="render()">
+
+      <fieldset>
+        <input
+          type="text"
+          v-model="formTheme"
+          placeholder="Ex: arvore, carro, cidade..."
+          id="id-theme"
+        />
+      </fieldset>
+
+      <button
+        :id="btnForm"
+        :class="{ loading: isLoading }"
+        type="button"
+        @click="render()"
+      >
         {{ isLoading ? '' : 'Gerar' }}
       </button>
     </form>
@@ -41,35 +57,46 @@ export default {
     return {
       formWidth: 1360,
       formHeight: 768,
+      formTheme: 'natureza',
       btnForm: '',
       isLoading: false
     }
   },
   methods: {
-    render() {
+    async render() {
       const width = this.formWidth
       const height = this.formHeight
+      const theme = this.formTheme.trim() || 'natureza'
+      const API_URL = import.meta.env.VITE_UNSPLASH_API_URL
+      const ACCESS_KEY = import.meta.env.VITE_UNSPLASH_ACCESS_KEY
 
-      const API_URL = `https://picsum.photos/${width}/${height}.webp?random`
+      const endpoint = `${API_URL}/search/photos?query=${encodeURIComponent(theme)}&per_page=1`
 
       this.isLoading = true
-      fetch(API_URL)
-        .then((response) => {
-          if (!response.ok) {
-            throw new Error('Erro ao buscar a imagem')
+
+      try {
+        const response = await fetch(endpoint, {
+          headers: {
+            Authorization: `Client-ID ${ACCESS_KEY}`
           }
-          return response
         })
-        .then((response) => {
-          const imageUrl = response.url
-          this.setImageContainer(imageUrl)
-        })
-        .catch((error) => {
-          console.error('Erro na requisição:', error)
-        })
-        .finally(() => {
-          this.isLoading = false
-        })
+
+        if (!response.ok) throw new Error('Erro ao buscar imagem')
+
+        const data = await response.json()
+
+        if (data.results.length === 0) {
+          throw new Error('Nenhuma imagem encontrada para esse tema')
+        }
+
+        const imageUrl = `${data.results[0].urls.raw}&w=${width}&h=${height}&fit=crop&fm=webp`
+
+        this.setImageContainer(imageUrl)
+      } catch (error) {
+        console.error('Erro na requisição:', error)
+      } finally {
+        this.isLoading = false
+      }
     },
 
     setImageContainer(image) {
@@ -79,21 +106,14 @@ export default {
     inputRules(event) {
       const input = event.target
       let value = parseInt(input.value)
-
       const min = parseInt(input.min)
       const max = parseInt(input.max)
 
-      if (value < min) {
-        value = min
-      } else if (value > max) {
-        value = max
-      }
+      if (value < min) value = min
+      else if (value > max) value = max
 
-      if (input.id === 'id-width') {
-        this.formWidth = value
-      } else if (input.id === 'id-height') {
-        this.formHeight = value
-      }
+      if (input.id === 'id-width') this.formWidth = value
+      else if (input.id === 'id-height') this.formHeight = value
 
       input.value = value
     }
@@ -116,6 +136,7 @@ export default {
   display: flex;
   gap: 10px;
   justify-content: center;
+  flex-wrap: wrap;
 }
 
 .container-form form .fieldset-form {

@@ -6,9 +6,9 @@ import FormInput from './components/FormInput.vue'
 <template>
   <main class="container">
     <section class="container-wrapper">
-      <h1 class="text-white">Insira o tamanho de suas imagens</h1>
+      <h1 class="text-white">Crie imagens de mockup instantaneamente</h1>
       <h3 class="text-white">
-        Gere imagens mocks aleatórias para por em seus projetos de forma rápida!
+        Escolha o tamanho, defina o tema e obtenha imagens aleatórias em segundos para protótipos, sites ou apps.
       </h3>
       <FormInput @renderImage="renderImage" />
       <RenderImage :image="image" />

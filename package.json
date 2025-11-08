@@ -11,6 +11,7 @@
     "format": "prettier --write src/"
   },
   "dependencies": {
+    "unsplash-js": "^7.0.20",
     "vue": "^3.4.21"
   },
   "devDependencies": {
