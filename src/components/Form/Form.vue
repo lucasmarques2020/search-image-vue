@@ -6,6 +6,12 @@
     import SelectFormat from './SelectFormat.vue';
 
     const emit = defineEmits(['imageGenerated', 'showToast']);
+    const props = defineProps({
+        externalLoading: {
+            type: Boolean,
+            default: false
+        }
+    });
     const isMobile = ref(false);
     const maxSize = computed(() => isMobile.value ? 3000 : 4000);
     
@@ -64,6 +70,8 @@
         }
     };
 
+    const isDisabled = computed(() => isLoading.value || props.externalLoading);
+
     const generateImage = async () => {
         if (isLoading.value) return;
         
@@ -94,6 +102,7 @@
             const data = await response.json();
             
             if (data.results.length === 0) {
+                emit('showToast', { message: 'Nenhuma imagem encontrada para esse tema', type: 'error' });
                 throw new Error('Nenhuma imagem encontrada para esse tema');
             }
 
@@ -107,6 +116,9 @@
             
         } catch (error) {
             console.error('Erro na requisição:', error);
+            if (!error || String(error).indexOf('Nenhuma imagem encontrada') === -1) {
+                emit('showToast', { message: 'Erro ao buscar imagem', type: 'error' });
+            }
         } finally {
             isLoading.value = false;
         }
@@ -143,11 +155,10 @@
         <button
             type="submit"
             class="btn btn-info text-white font-semibold mt-4 relative min-h-10 w-full"
-            :class="{ 'loading before:absolute! before:left-1/2! before:-translate-x-1/2 before:w-4 before:h-4': isLoading }"
-            :disabled="isLoading"
+            :disabled="isDisabled"
         >
-            <span :class="{ 'opacity-0': isLoading }">
-                {{ isLoading ? 'Gerando...' : 'Gerar imagem' }}
+            <span :class="{ 'loading loading-spinner loading-xs': isLoading || props.externalLoading }">
+                {{ (isLoading || props.externalLoading) ? 'Gerando...' : 'Gerar imagem' }}
             </span>
         </button>
     </form>

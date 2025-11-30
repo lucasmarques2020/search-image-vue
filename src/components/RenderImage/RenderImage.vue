@@ -2,17 +2,21 @@
 import { ref } from 'vue';
 
 const props = defineProps({
-    imageUrl: {
-        type: String,
-        default: ''
-    },
-    format: {
-        type: String,
-        default: 'webp'
-    }
+  imageUrl: {
+    type: String,
+    default: ''
+  },
+  format: {
+    type: String,
+    default: 'webp'
+  },
+  imageLoading: {
+    type: Boolean,
+    default: false
+  }
 });
 
-const emit = defineEmits(['showToast']);
+const emit = defineEmits(['showToast', 'imageLoaded']);
 const copied = ref(false);
 const idRenderImage = ref('id-render-image');
 
@@ -37,6 +41,16 @@ const copyImageUrl = (url) => {
                 type: 'error'
             });
         });
+};
+
+const onImgLoad = () => {
+  emit('imageLoaded');
+};
+
+const onImgError = (err) => {
+  console.error('Erro ao carregar imagem:', err);
+  emit('showToast', { message: 'Erro ao carregar imagem', type: 'error' });
+  emit('imageLoaded');
 };
 
 const downloadImage = async () => {
@@ -68,7 +82,7 @@ const downloadImage = async () => {
 };
 </script>
 <template>
-  <div class="h-full w-full p-4">
+  <div class="h-auto max-h-[48rem] w-full p-4 pb-0">
     <div class="bg-base-300 rounded-lg h-full w-full flex items-center justify-center relative overflow-hidden">
       <div class="w-full h-full flex flex-col items-center justify-center p-2 sm:p-4 md:p-6 relative">
         <p v-if="!imageUrl" class="text-base-content text-lg">
@@ -76,15 +90,21 @@ const downloadImage = async () => {
         </p>
         
         <template v-else>
-          <div class="relative group bg-white p-2 sm:p-4 rounded-lg w-full h-full flex items-center justify-center overflow-hidden">
+            <div class="relative group bg-white p-2 sm:p-4 rounded-lg w-full h-full flex items-center justify-center overflow-hidden">
             <img 
               :id="idRenderImage" 
               :src="imageUrl" 
               alt="Imagem renderizada" 
+              @load="onImgLoad"
+              @error="onImgError"
               class="w-auto h-auto max-w-[calc(100vw-2rem)] md:max-w-[calc(100vw-4rem)] max-h-[calc(100vh-10rem)] md:max-h-[calc(100vh-12rem)] object-contain"
             />
+
+            <div v-if="props.imageLoading" class="absolute inset-0 bg-base-100/75 flex items-center justify-center z-20">
+              <div class="loading loading-spinner loading-lg"></div>
+            </div>
             <div 
-              class="absolute inset-0 bg-base-100/75 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+              class="absolute inset-0 bg-base-100/75 flex items-center h-full max-h-full justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200"
             >
               <div class="flex gap-4">
                 <button
@@ -109,12 +129,6 @@ const downloadImage = async () => {
             </div>
           </div>
         </template>
-      </div>
-    </div>
-    <!-- Toast -->
-    <div id="toast" class="toast toast-end">
-      <div class="alert" :class="toastType" v-if="showToast">
-        {{ toastMessage }}
       </div>
     </div>
   </div>
